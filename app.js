@@ -13,8 +13,8 @@ const sessions = {};
 app.use(bodyParser.json());
 app.use(cors());
 
-app.use(express.json()); // Necesita paréntesis
-app.use(express.urlencoded({ extended: true })); // También se necesita el paréntesis
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true })); 
 
 app.use(
     session({
@@ -84,21 +84,26 @@ app.post("/logout", (req, res) => {
 });
 
 app.put("/update", (req, res) => {
-    const { sessionId, email, nickname } = req.body
+    const { sessionId, email, nickname } = req.body;
 
     if (!sessionId || !sessions[sessionId]) {
         return res.status(404).json({
-            message: "No existe una sesion activa"
-        })
+            message: "No existe una sesión activa"
+        });
     }
 
     if (email) sessions[sessionId].email = email;
     if (nickname) sessions[sessionId].nickname = nickname;
     sessions[sessionId].lastAccessed = new Date();
-})
+
+    res.status(200).json({
+        message: "Datos actualizados con éxito",
+        session: sessions[sessionId]
+    });
+});
 
 app.get("/status", (req, res) => {
-    const sessionId = req.query.sessionId; // Cambié "sesionId" por "sessionId"
+    const sessionId = req.query.sessionId; 
 
     if (!sessionId || !sessions[sessionId]) {
         return res.status(404).json({
@@ -106,9 +111,17 @@ app.get("/status", (req, res) => {
         });
     }
 
+    const session = sessions[sessionId];
+    const sessionDateCreated = moment.utc(session.dateCreated).tz("America/Mexico_City").format("YYYY-MM-DD HH:mm:ss");
+    const sessionLastAccessed = moment.utc(session.lastAccessed).tz("America/Mexico_City").format("YYYY-MM-DD HH:mm:ss");
+
     res.status(200).json({
         message: "Sesión activa",
-        session: sessions[sessionId]
+        session: {
+            ...session,
+            dateCreated: sessionDateCreated,
+            lastAccessed: sessionLastAccessed,
+        }
     });
 });
 
